@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alarma '),
+        title: const Text('Alarma'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -35,6 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ],
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () => context.push('/test_bluetooth'),
+          child: const Text("Probar Bluetooth"),
+        ),
       ),
     );
   }

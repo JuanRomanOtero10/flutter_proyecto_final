@@ -6,15 +6,26 @@ class BluetoothService {
   final FlutterBluetoothSerial _bluetooth = FlutterBluetoothSerial.instance;
 
   BluetoothConnection? _connection;
+  BluetoothDevice? _connectedDevice;
 
-  Future<void> connectToDevice(BluetoothDevice device) async {
+  Future<bool> connectToDevice(BluetoothDevice device) async {
     try {
       _connection = await BluetoothConnection.toAddress(device.address);
-      print('Conectado al dispositivo');
+      if (_connection != null && _connection!.isConnected) {
+        _connectedDevice = device;
+        print('Conexión exitosa');
+        return true;
+      } else {
+        print('La conexión falló ');
+        return false;
+      }
     } catch (e) {
       print('Error de conexión: $e');
+      return false;
     }
   }
+
+
 
   void sendData(String message) {
     if (_connection != null && _connection!.isConnected) {
@@ -25,6 +36,14 @@ class BluetoothService {
       print('No hay conexión Bluetooth activa');
     }
   }
+  
+  bool isConnectedTo(BluetoothDevice device) {
+    return _connection != null &&
+          _connection!.isConnected &&
+          _connectedDevice != null &&
+          _connectedDevice!.address == device.address;
+  }
+
 
   void disconnect() {
     _connection?.dispose();
