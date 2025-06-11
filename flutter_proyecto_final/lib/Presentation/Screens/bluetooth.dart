@@ -3,14 +3,14 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_proyecto_final/Core/bluethoot_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class TestBluetoothScreen extends StatefulWidget {
-  const TestBluetoothScreen({super.key});
+class BluetoothScreen extends StatefulWidget {
+  const BluetoothScreen({super.key});
 
   @override
-  State<TestBluetoothScreen> createState() => _TestBluetoothScreenState();
+  State<BluetoothScreen> createState() => _BluetoothScreenState();
 }
 
-class _TestBluetoothScreenState extends State<TestBluetoothScreen> {
+class _BluetoothScreenState extends State<BluetoothScreen> {
   final BluetoothService _bluetoothService = BluetoothService();
   List<BluetoothDevice> _devices = [];
   BluetoothDevice? _selectedDevice;

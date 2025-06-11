@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class Alarma {
   final TimeOfDay hora;
-  final List<int> diasRepeticion; // 1 = lunes, 7 = domingo
+  final List<int>? diasRepeticion; // 1 = lunes, 7 = domingo
   final bool vibracion;
   final bool luz;
   final String? patronVibracion;
@@ -11,7 +11,7 @@ class Alarma {
 
   Alarma({
     required this.hora,
-    required this.diasRepeticion,
+    this.diasRepeticion,
     required this.vibracion,
     required this.luz,
     this.patronVibracion,
@@ -39,3 +39,7 @@ class Alarma {
     );
   }
 }
+
+final List<Alarma> alarmas = [
+
+];

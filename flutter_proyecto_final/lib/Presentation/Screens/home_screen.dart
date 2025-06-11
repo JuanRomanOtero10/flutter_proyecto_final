@@ -1,45 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_proyecto_final/Entities/alarm.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
 
-class HomeScreen extends StatefulWidget {
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, ref) {
+    final alarmas = ref.watch(alarmasProvider);
 
-class _HomeScreenState extends State<HomeScreen> {
-  List<Alarma> alarmas = [
-    Alarma(
-      hora: const TimeOfDay(hour: 7, minute: 30),
-      diasRepeticion: [1, 2, 3, 4, 5],
-      vibracion: true,
-      luz: false,
-      activa: true,
-    )
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alarma'),
+        title: const Text('Alarmas'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Agregar alarma',
             onPressed: () {
               context.push('/editar');
             },
           ),
         ],
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => context.push('/test_bluetooth'),
-          child: const Text("Probar Bluetooth"),
+      body: ListView.builder(
+        itemCount: alarmas.length,
+        itemBuilder: (context, index) {
+          final alarma = alarmas[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              title: Text(alarma.hora.format(context)),
+              subtitle: Text(
+                alarma.activa ? 'Activa/n' : 'Desactivada /n'
+                'Luz: ${alarma.patronLuz ?? 'Ninguna'}\n'
+                'Vibración: ${alarma.patronVibracion ?? 'Ninguna'}',
+                style: TextStyle(fontSize: 14),
+                ),
+              trailing: Switch(
+                value: alarma.activa,
+                onChanged: (val) {
+                  final nuevasAlarmas = [...alarmas];
+                  nuevasAlarmas[index] = alarma.copyWith(activa: val);
+                  ref.read(alarmasProvider.notifier).state = nuevasAlarmas;
+                },
+              ),
+              onTap: () {
+                context.push('/editar', extra: {'index': index, 'alarma': alarma});
+              },
+            ),
+          );
+        },
+      ),
+
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.bluetooth),
+          label: const Text('Conectar Bluetooth'),
+          onPressed: () {
+            context.push('/bluetooth');
+          },
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50), // botón alto y ancho completo
+          ),
         ),
       ),
     );

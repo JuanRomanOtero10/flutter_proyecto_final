@@ -1,23 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_proyecto_final/Entities/alarm.dart';
+import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
 
-class EditarAlarma extends StatefulWidget {
-  const EditarAlarma({super.key});
+class EditarAlarma extends ConsumerStatefulWidget {
+  final Alarma? alarmaExistente;
+  final int? index;
+
+  const EditarAlarma({this.alarmaExistente, this.index, Key? key}) : super(key: key);
 
   @override
-  State<EditarAlarma> createState() => _EditarAlarmaState();
+  ConsumerState<EditarAlarma> createState() => _EditarAlarmaState();
 }
 
 
-class _EditarAlarmaState extends State<EditarAlarma> {  
-  DateTime selectedTime = DateTime.now(); // hora actual al iniciar
+class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
+  late DateTime selectedTime;
   bool vibracion = false;
   bool luz = false;
+  String? patronVibracion;
+  String? patronLuz;
+
 
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.alarmaExistente != null) {
+      selectedTime = DateTime(
+        0, 0, 0,
+        widget.alarmaExistente!.hora.hour,
+        widget.alarmaExistente!.hora.minute,
+      );
+      vibracion = widget.alarmaExistente!.vibracion;
+      luz = widget.alarmaExistente!.luz;
+      patronVibracion = widget.alarmaExistente!.patronVibracion;
+      patronLuz = widget.alarmaExistente!.patronLuz;
+    } else {
+      selectedTime = DateTime.now();
+    }
+  }
+
+  void guardar() {
+    final nuevaAlarma = Alarma(
+      hora: TimeOfDay(hour: selectedTime.hour, minute: selectedTime.minute),
+      diasRepeticion: [], // agregar manejo si usas días
+      vibracion: vibracion,
+      luz: luz,
+      patronVibracion: patronVibracion,
+      patronLuz: patronLuz,
+      activa: true,
+    );
+
+    final alarmas = ref.read(alarmasProvider);
+
+    if (widget.index != null) {
+      // Editar
+      final nuevasAlarmas = [...alarmas];
+      nuevasAlarmas[widget.index!] = nuevaAlarma;
+      ref.read(alarmasProvider.notifier).state = nuevasAlarmas;
+    } else {
+      // Agregar nueva
+      ref.read(alarmasProvider.notifier).state = [...alarmas, nuevaAlarma];
+    }
+
+    context.go('/home');
+  }
+
+
+
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
