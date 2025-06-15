@@ -7,10 +7,7 @@ import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
 
 class EditarAlarma extends ConsumerStatefulWidget {
-  final Alarma? alarmaExistente;
-  final int? index;
-
-  const EditarAlarma({this.alarmaExistente, this.index, Key? key}) : super(key: key);
+  const EditarAlarma({Key? key}) : super(key: key);
 
   @override
   ConsumerState<EditarAlarma> createState() => _EditarAlarmaState();
@@ -29,46 +26,47 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
   @override
   void initState() {
     super.initState();
-    if (widget.alarmaExistente != null) {
-      selectedTime = DateTime(
-        0, 0, 0,
-        widget.alarmaExistente!.hora.hour,
-        widget.alarmaExistente!.hora.minute,
-      );
-      vibracion = widget.alarmaExistente!.vibracion;
-      luz = widget.alarmaExistente!.luz;
-      patronVibracion = widget.alarmaExistente!.patronVibracion;
-      patronLuz = widget.alarmaExistente!.patronLuz;
+    final alarma = ref.read(alarmaSeleccionadaProvider);
+    if (alarma != null) {
+      selectedTime = DateTime(0, 0, 0, alarma.hora.hour, alarma.hora.minute);
+      vibracion = alarma.vibracion;
+      luz = alarma.luz;
+      patronVibracion = alarma.patronVibracion;
+      patronLuz = alarma.patronLuz;
     } else {
       selectedTime = DateTime.now();
     }
   }
 
+
   void guardar() {
     final nuevaAlarma = Alarma(
       hora: TimeOfDay(hour: selectedTime.hour, minute: selectedTime.minute),
-      diasRepeticion: [], // agregar manejo si usas días
+      diasRepeticion: [], // agregá si manejás esto
       vibracion: vibracion,
       luz: luz,
-      patronVibracion: patronVibracion,
-      patronLuz: patronLuz,
+      patronVibracion: ref.read(patronVibracionProvider),
+      patronLuz: ref.read(patronLuzProvider),
       activa: true,
     );
 
     final alarmas = ref.read(alarmasProvider);
+    final index = ref.read(indexSeleccionadoProvider);
 
-    if (widget.index != null) {
-      // Editar
+    if (index != null) {
       final nuevasAlarmas = [...alarmas];
-      nuevasAlarmas[widget.index!] = nuevaAlarma;
+      nuevasAlarmas[index] = nuevaAlarma;
       ref.read(alarmasProvider.notifier).state = nuevasAlarmas;
     } else {
-      // Agregar nueva
       ref.read(alarmasProvider.notifier).state = [...alarmas, nuevaAlarma];
     }
+    
+    ref.read(alarmaSeleccionadaProvider.notifier).state = null;
+    ref.read(indexSeleccionadoProvider.notifier).state = null;
 
     context.go('/home');
   }
+
 
 
 
@@ -179,7 +177,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                context.go('/home');
+                guardar();
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),

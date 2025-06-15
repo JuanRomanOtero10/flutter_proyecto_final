@@ -33,13 +33,25 @@ class HomeScreen extends ConsumerWidget {
             elevation: 3,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
-              title: Text(alarma.hora.format(context)),
-              subtitle: Text(
-                alarma.activa ? 'Activa/n' : 'Desactivada /n'
-                'Luz: ${alarma.patronLuz ?? 'Ninguna'}\n'
-                'Vibración: ${alarma.patronVibracion ?? 'Ninguna'}',
-                style: TextStyle(fontSize: 14),
+              isThreeLine: true,
+              minLeadingWidth: 105,  // o más si querés
+              leading: SizedBox(
+                width: 105,
+                child: Center(
+                  child: Text(
+                    alarma.hora.format(context),
+                    style: TextStyle(fontSize: 40),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
+              ),
+
+              subtitle: Text(
+                '${alarma.activa ? 'Activa' : 'Desactivada'}\n'
+                'Luz: ${alarma.luz ? (alarma.patronLuz ?? 'Ninguna') : 'Desactivada'}\n'
+                'Vibración: ${alarma.vibracion ? (alarma.patronVibracion ?? 'Ninguna') : 'Desactivada'}',
+                style: const TextStyle(fontSize: 14),
+              ),
               trailing: Switch(
                 value: alarma.activa,
                 onChanged: (val) {
@@ -49,7 +61,9 @@ class HomeScreen extends ConsumerWidget {
                 },
               ),
               onTap: () {
-                context.push('/editar', extra: {'index': index, 'alarma': alarma});
+                ref.read(alarmaSeleccionadaProvider.notifier).state = alarma;
+                ref.read(indexSeleccionadoProvider.notifier).state = index;
+                context.push('/editar');
               },
             ),
           );
@@ -65,7 +79,7 @@ class HomeScreen extends ConsumerWidget {
             context.push('/bluetooth');
           },
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(50), // botón alto y ancho completo
+            minimumSize: const Size.fromHeight(50), 
           ),
         ),
       ),

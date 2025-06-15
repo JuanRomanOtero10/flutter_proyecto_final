@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
-class PatronVibracion extends StatefulWidget {
+class PatronVibracion extends ConsumerWidget {
   const PatronVibracion({super.key});
 
   @override
-  State<PatronVibracion> createState() => _PatronVibracionState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final patron = ref.watch(patronVibracionProvider);
+    double intensidad;
+    switch (patron) {
+      case 'Baja':
+        intensidad = 0;
+        break;
+      case 'Media':
+        intensidad = 1.5;
+        break;
+      case 'Alta':
+        intensidad = 3;
+        break;
+      default:
+        intensidad = 1.5;
+    }
 
-class _PatronVibracionState extends State<PatronVibracion> {
-  double intensidad = 1.5;
-  
-  String getTextoIntensidad() {
-    if (intensidad <=1) return 'Baja';
-    if (intensidad < 2 && intensidad > 1) return 'Media';
-    return 'Alta';
-  }
+    String getTextoIntensidad(double value) {
+      if (value <= 1) return 'Baja';
+      if (value > 1 && value < 2) return 'Media';
+      return 'Alta';
+    }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Patrón de Vibración'),
@@ -28,24 +39,22 @@ class _PatronVibracionState extends State<PatronVibracion> {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            // Slider de intensidad
             Slider(
               value: intensidad,
               onChanged: (value) {
-                setState(() {
-                  intensidad = value;
-                });
+                final texto = getTextoIntensidad(value);
+                ref.read(patronVibracionProvider.notifier).state = texto;
               },
               min: 0,
               max: 3,
-              divisions: 11,
-              label: getTextoIntensidad(),
+              divisions: 2,
+              label: getTextoIntensidad(intensidad),
               activeColor: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             // Texto descriptivo
             Text(
-              'Intensidad: ${getTextoIntensidad()}',
+              'Intensidad: ${getTextoIntensidad(intensidad)}',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ],

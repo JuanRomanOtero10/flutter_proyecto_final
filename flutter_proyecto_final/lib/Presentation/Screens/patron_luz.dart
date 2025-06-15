@@ -1,32 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
-class PatronLuz extends StatefulWidget {
+class PatronLuz extends ConsumerWidget {
   const PatronLuz({super.key});
 
   @override
-  State<PatronLuz> createState() => _PatronLuzState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final patron = ref.watch(patronLuzProvider);
 
-class _PatronLuzState extends State<PatronLuz> {
-  bool constante = true;
-  bool titilar = false;
-
-  void activarConstante() {
-    setState(() {
-      constante = true;
-      titilar = false;
-    });
-  }
-
-  void activarTitilar() {
-    setState(() {
-      titilar = true;
-      constante = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Patrón de Luz'),
@@ -38,7 +20,9 @@ class _PatronLuzState extends State<PatronLuz> {
           children: [
             // Constante
             GestureDetector(
-              onTap: activarConstante,
+              onTap: () {
+                ref.read(patronLuzProvider.notifier).state = "Constante";
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -57,9 +41,9 @@ class _PatronLuzState extends State<PatronLuz> {
                       ),
                     ),
                     Switch(
-                      value: constante,
-                      onChanged: (val) {
-                        activarConstante();
+                      value: patron == "Constante",
+                      onChanged: (_) {
+                        ref.read(patronLuzProvider.notifier).state = "Constante";
                       },
                     ),
                   ],
@@ -68,7 +52,9 @@ class _PatronLuzState extends State<PatronLuz> {
             ),
             // Titilar
             GestureDetector(
-              onTap: activarTitilar,
+              onTap: () {
+                ref.read(patronLuzProvider.notifier).state = "Titilar";
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -87,9 +73,9 @@ class _PatronLuzState extends State<PatronLuz> {
                       ),
                     ),
                     Switch(
-                      value: titilar,
-                      onChanged: (val) {
-                        activarTitilar();
+                      value: patron == "Titilar",
+                      onChanged: (_) {
+                        ref.read(patronLuzProvider.notifier).state = "Titilar";
                       },
                     ),
                   ],
