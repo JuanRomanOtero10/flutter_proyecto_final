@@ -23,7 +23,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
 
 
 
-  @override
+ @override
   void initState() {
     super.initState();
     final alarma = ref.read(alarmaSeleccionadaProvider);
@@ -35,8 +35,13 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
       patronLuz = alarma.patronLuz;
     } else {
       selectedTime = DateTime.now();
+      vibracion = true;
+      luz = true;
+      patronVibracion = ref.read(patronVibracionProvider);
+      patronLuz = ref.read(patronLuzProvider);
     }
   }
+
 
 
   void guardar() {
@@ -50,17 +55,16 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
       activa: true,
     );
 
-    final alarmas = ref.read(alarmasProvider);
+    final alarmas = [...ref.read(alarmasProvider)];
     final index = ref.read(indexSeleccionadoProvider);
-
+    
     if (index != null) {
-      final nuevasAlarmas = [...alarmas];
-      nuevasAlarmas[index] = nuevaAlarma;
-      ref.read(alarmasProvider.notifier).state = nuevasAlarmas;
+      alarmas[index] = nuevaAlarma; 
     } else {
-      ref.read(alarmasProvider.notifier).state = [...alarmas, nuevaAlarma];
+      alarmas.add(nuevaAlarma);
     }
     
+    ref.read(alarmasProvider.notifier).state = alarmas; 
     ref.read(alarmaSeleccionadaProvider.notifier).state = null;
     ref.read(indexSeleccionadoProvider.notifier).state = null;
 

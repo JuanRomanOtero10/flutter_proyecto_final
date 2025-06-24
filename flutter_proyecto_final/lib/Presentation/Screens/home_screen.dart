@@ -16,13 +16,36 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Alarmas'),
         actions: [
+          Consumer(
+            builder: (context, ref, _) {
+              final bluetoothService = ref.watch(bluetoothServiceProvider);
+              final color = bluetoothService.isConnected ? Colors.green : Colors.red;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.black, width: 1.5),
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
+              ref.read(alarmaSeleccionadaProvider.notifier).state = null;
+              ref.read(indexSeleccionadoProvider.notifier).state = null;
+              ref.read(patronVibracionProvider.notifier).state = "Media";
+              ref.read(patronLuzProvider.notifier).state = "Constante";
               context.push('/editar');
             },
           ),
         ],
+
       ),
       body: ListView.builder(
         itemCount: alarmas.length,
@@ -63,6 +86,8 @@ class HomeScreen extends ConsumerWidget {
               onTap: () {
                 ref.read(alarmaSeleccionadaProvider.notifier).state = alarma;
                 ref.read(indexSeleccionadoProvider.notifier).state = index;
+                ref.read(patronVibracionProvider.notifier).state = alarma.patronVibracion ?? "Media";
+                ref.read(patronLuzProvider.notifier).state = alarma.patronLuz ?? "Constante";
                 context.push('/editar');
               },
             ),

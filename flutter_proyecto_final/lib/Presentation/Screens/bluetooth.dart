@@ -1,26 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:flutter_proyecto_final/Core/bluethoot_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
-class BluetoothScreen extends StatefulWidget {
+class BluetoothScreen extends ConsumerStatefulWidget {
   const BluetoothScreen({super.key});
 
   @override
-  State<BluetoothScreen> createState() => _BluetoothScreenState();
+  ConsumerState<BluetoothScreen> createState() => _BluetoothScreenState();
 }
 
-class _BluetoothScreenState extends State<BluetoothScreen> {
-  final BluetoothService _bluetoothService = BluetoothService();
+class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
   List<BluetoothDevice> _devices = [];
   BluetoothDevice? _selectedDevice;
-  bool _isConnected = false;
 
+  @override
   @override
   void initState() {
     super.initState();
-    _initBluetooth();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initBluetooth();
+    });
   }
+
 
   Future<void> _initBluetooth() async {
     bool permisosOk = await _checkBluetoothPermissions();
@@ -31,8 +34,9 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       return;
     }
 
-    await _bluetoothService.enableBluetooth();
-    final devices = await _bluetoothService.getBondedDevices();
+    final bluetoothService = ref.read(bluetoothServiceProvider);
+    await bluetoothService.enableBluetooth();
+    final devices = await bluetoothService.getBondedDevices();
     setState(() {
       _devices = devices;
     });
@@ -48,16 +52,16 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     if (!statusLocation.isGranted) await Permission.locationWhenInUse.request();
 
     return await Permission.bluetoothScan.isGranted &&
-           await Permission.bluetoothConnect.isGranted &&
-           await Permission.locationWhenInUse.isGranted;
+        await Permission.bluetoothConnect.isGranted &&
+        await Permission.locationWhenInUse.isGranted;
   }
 
   void _connect() async {
     if (_selectedDevice != null) {
-      if (_bluetoothService.isConnectedTo(_selectedDevice!)) {
-        setState(() {
-          _isConnected = true;
-        });
+      final bluetoothService = ref.read(bluetoothServiceProvider);
+
+      if (bluetoothService.isConnected &&
+          bluetoothService.connectedDevice?.address == _selectedDevice!.address) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ya conectado a ${_selectedDevice!.name ?? _selectedDevice!.address}'),
@@ -68,11 +72,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
         return;
       }
 
-      bool conectado = await _bluetoothService.connectToDevice(_selectedDevice!);
-
-      setState(() {
-        _isConnected = conectado;
-      });
+      bool conectado = await bluetoothService.connectToDevice(_selectedDevice!);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -88,15 +88,17 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     }
   }
 
-
-
-
   void _sendMessage() {
-    _bluetoothService.sendData("Hola ESP32\n");
+    final mensaje =   "LED_ON"; 
+    final bluetoothService = ref.read(bluetoothServiceProvider);
+    bluetoothService.sendData("$mensaje\n");
   }
 
   @override
   Widget build(BuildContext context) {
+    final bluetoothService = ref.watch(bluetoothServiceProvider);
+    final isConnected = bluetoothService.isConnected;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Prueba Bluetooth'),
@@ -135,16 +137,13 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Text(
-                  _isConnected
-                      ? 'Estado: Conectado'
-                      : 'Estado: Desconectado',
+                  isConnected ? 'Estado: Conectado' : 'Estado: Desconectado',
                   style: TextStyle(
-                    color: _isConnected ? Colors.green : Colors.red,
+                    color: isConnected ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-
             const SizedBox(height: 24),
             if (_selectedDevice != null)
               Card(
