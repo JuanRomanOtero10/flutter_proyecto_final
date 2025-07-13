@@ -101,7 +101,7 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prueba Bluetooth'),
+        title: const Text('Conectar Bluetooth'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -147,9 +147,15 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
             const SizedBox(height: 24),
             if (_selectedDevice != null)
               Card(
-                color: Colors.blue.shade50,
+                color: Theme.of(context).cardColor,
                 elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primaryContainer, 
+                    width: 1,
+                  ),
+                  ),
                 child: ListTile(
                   leading: const Icon(Icons.bluetooth, color: Colors.blue),
                   title: Text(_selectedDevice!.name ?? 'Sin nombre'),
@@ -162,6 +168,8 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
               icon: const Icon(Icons.link),
               label: const Text("Conectar"),
               style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer, // más seguro que color fijo
+                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 textStyle: const TextStyle(fontSize: 18),
               ),
@@ -170,9 +178,10 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
             ElevatedButton.icon(
               onPressed: _sendMessage,
               icon: const Icon(Icons.send),
-              label: const Text("Enviar 'Hola ESP32'"),
+              label: const Text("Enviar mensaje"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 154, 225, 238),
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer, 
+                foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 textStyle: const TextStyle(fontSize: 18),
               ),

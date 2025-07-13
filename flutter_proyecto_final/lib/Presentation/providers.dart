@@ -9,6 +9,8 @@ final indexSeleccionadoProvider = StateProvider<int?>((ref) => null);
 final patronLuzProvider = StateProvider<String>((ref) => "Constante");
 final patronVibracionProvider = StateProvider<String?>((ref) => "Media");
 final bluetoothConectadoProvider = StateProvider<bool>((ref) => false);
+final alarmaParaBorrarProvider = StateProvider<List<Alarma>>((ref) => []);
+
 
 
 final bluetoothServiceProvider = ChangeNotifierProvider<BluetoothService>((ref) {

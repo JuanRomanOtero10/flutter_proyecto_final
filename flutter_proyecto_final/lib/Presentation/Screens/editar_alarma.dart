@@ -52,7 +52,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
       luz: luz,
       patronVibracion: ref.read(patronVibracionProvider),
       patronLuz: ref.read(patronLuzProvider),
-      activa: true,
+      activa: false,
     );
 
     final alarmas = [...ref.read(alarmasProvider)];
@@ -81,10 +81,11 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
         title: const Text('Editar Alarma'),
         backgroundColor:Theme.of(context).scaffoldBackgroundColor ,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
             // Hora
              SizedBox(
               height: 250,
@@ -175,6 +176,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
               ),
             ),
           
+          
           const Spacer(), // Empuja el botón hacia abajo
 
           SizedBox(
@@ -196,6 +198,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
            ),
         ],
         ),
+      ),
       ),
     );
   }
