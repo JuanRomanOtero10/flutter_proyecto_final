@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "675203738028",
+    "project_id": "sleep-deep",
+    "storage_bucket": "sleep-deep.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:675203738028:android:0c3ef15486f6c2bdeab209",
+        "android_client_info": {
+          "package_name": "com.example.flutter_proyecto_final"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJcn9W2HNMXEwYCqLH0ILQVp4UN2eZ5H4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

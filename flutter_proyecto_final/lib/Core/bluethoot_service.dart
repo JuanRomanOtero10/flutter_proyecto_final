@@ -63,4 +63,8 @@ class BluetoothService extends ChangeNotifier {
   Future<List<BluetoothDevice>> getBondedDevices() async {
     return await _bluetooth.getBondedDevices();
   }
+
+  Stream<BluetoothDiscoveryResult> startDiscovery() {
+  return _bluetooth.startDiscovery();
+  }
 }

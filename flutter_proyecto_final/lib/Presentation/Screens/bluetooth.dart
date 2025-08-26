@@ -14,6 +14,8 @@ class BluetoothScreen extends ConsumerStatefulWidget {
 class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
   List<BluetoothDevice> _devices = [];
   BluetoothDevice? _selectedDevice;
+  final List<BluetoothDevice> _dispositivosDescubiertos = [];
+  bool _buscando = false;
 
   @override
   @override
@@ -88,12 +90,44 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
     }
   }
 
+  Future<void> _buscarDispositivosDisponibles() async {
+  setState(() {
+    _buscando = true;
+    _dispositivosDescubiertos.clear();
+  });
+
+  final bluetoothService = ref.read(bluetoothServiceProvider);
+
+  bluetoothService.startDiscovery().listen((result) {
+    final device = result.device;
+
+  final yaListado = _devices.any((d) => d.address == device.address) ||
+                    _dispositivosDescubiertos.any((d) => d.address == device.address);
+
+  if (!yaListado && device.name != null && device.name!.isNotEmpty) {
+    setState(() {
+      _dispositivosDescubiertos.add(device);
+    });
+  }
+  }).onDone(() {
+    setState(() {
+      _buscando = false;
+    });
+  });
+  }
 
 
   @override
   Widget build(BuildContext context) {
     final bluetoothService = ref.watch(bluetoothServiceProvider);
     final isConnected = bluetoothService.isConnected;
+
+    final todosLosDispositivos = [
+  ..._devices,
+  ..._dispositivosDescubiertos.where(
+    (d) => !_devices.any((e) => e.address == d.address),
+  ) 
+  ];
 
     return Scaffold(
       appBar: AppBar(
@@ -122,7 +156,8 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
                   _selectedDevice = device;
                 });
               },
-              items: _devices.map((device) {
+              items: todosLosDispositivos.map((device) {
+
                 return DropdownMenuItem(
                   value: device,
                   child: Text(device.name ?? device.address),
@@ -170,12 +205,44 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
                 textStyle: const TextStyle(fontSize: 18),
               ),
             ),
-            
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _buscando ? null : _buscarDispositivosDisponibles,
+              icon: const Icon(Icons.search),
+              label: Text(_buscando ? "Buscando..." : "Buscar dispositivos disponibles"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+            if (_dispositivosDescubiertos.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Dispositivos disponibles:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              ..._dispositivosDescubiertos.map((device) {
+                return ListTile(
+                  leading: const Icon(Icons.bluetooth_searching),
+                  title: Text(device.name!),
+                  subtitle: Text(device.address),
+                  onTap: () {
+                    setState(() {
+                      _selectedDevice = device;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Seleccionado: ${device.name ?? device.address}")),
+                    );
+                  },
+                );
+              }),
+            ]
           ],
         ),
       ),
     );
   }
 }
+
 
 

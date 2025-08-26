@@ -7,7 +7,7 @@ import 'package:flutter_proyecto_final/Presentation/providers.dart';
 
 
 class EditarAlarma extends ConsumerStatefulWidget {
-  const EditarAlarma({Key? key}) : super(key: key);
+  const EditarAlarma({super.key});
 
   @override
   ConsumerState<EditarAlarma> createState() => _EditarAlarmaState();
@@ -44,37 +44,41 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
 
 
 
-  void guardar() {
-    final nuevaAlarma = Alarma(
-      hora: TimeOfDay(hour: selectedTime.hour, minute: selectedTime.minute),
-      diasRepeticion: [], // agregá si manejás esto
-      vibracion: vibracion,
-      luz: luz,
-      patronVibracion: ref.read(patronVibracionProvider),
-      patronLuz: ref.read(patronLuzProvider),
-      activa: false,
-    );
+  void guardar() async {
+  final nuevaAlarma = Alarma(
+    hora: TimeOfDay(hour: selectedTime.hour, minute: selectedTime.minute),
+    diasRepeticion: [],
+    vibracion: vibracion,
+    luz: luz,
+    patronVibracion: ref.read(patronVibracionProvider),
+    patronLuz: ref.read(patronLuzProvider),
+    activa: false,
+    id: ref.read(indexSeleccionadoProvider) != null 
+        ? ref.read(alarmasProvider)[ref.read(indexSeleccionadoProvider)!].id
+        : null,
+  );
 
-    final alarmas = [...ref.read(alarmasProvider)];
-    final index = ref.read(indexSeleccionadoProvider);
-    
-    if (index != null) {
-      alarmas[index] = nuevaAlarma; 
-    } else {
-      alarmas.add(nuevaAlarma);
-    }
-    
-    ref.read(alarmasProvider.notifier).state = alarmas; 
-    ref.read(alarmaSeleccionadaProvider.notifier).state = null;
-    ref.read(indexSeleccionadoProvider.notifier).state = null;
+  final notifier = ref.read(alarmasProvider.notifier);
+  final index = ref.read(indexSeleccionadoProvider);
 
-    context.go('/home');
+  if (index != null) {
+    await notifier.updateAlarma(nuevaAlarma);
+  } else {
+    await notifier.addAlarma(nuevaAlarma);
+  }
+
+  ref.read(alarmaSeleccionadaProvider.notifier).state = null;
+  ref.read(indexSeleccionadoProvider.notifier).state = null;
+
+  context.go('/home');
   }
 
 
 
 
 
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

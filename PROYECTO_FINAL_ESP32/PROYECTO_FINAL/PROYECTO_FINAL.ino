@@ -3,13 +3,20 @@
 
 BluetoothSerial SerialBT;
 
-#define LED 16
+#define LED 19
 #define MOTOR 17
 #define BOTON 18
 unsigned long tiempoInicio = 0;
 bool encendiendo = false;
 
+// Para Titilar
+unsigned long ultimoTitilar = 0;
+bool estadoLED = false;
 
+// Para V_Alta, V_Media y V_Baja
+unsigned long ultimoVibrar = 0;
+bool estadoMotor = false;
+unsigned long intervaloVibracion = 0;
 
 
 
@@ -35,33 +42,76 @@ void loop() {
       String hora = doc["hora"];
       String luz = doc["luz"];
       String vibracion = doc["vibracion"];
+      bool activa = doc["activa"];
+
 
       // Actuá en base a los datos recibidos
       Serial.println("Alarma recibida:");
       Serial.println(hora);
       Serial.println(luz);
       Serial.println(vibracion);
+      Serial.println("Activa: " + String(activa ? "Sí" : "No"));
+
+      if (activa) {
+        Serial.println("Alarma Activa");
+        // LUZ
+        if (luz == "Titilar") {
+          Titilar();
+        } else if (luz == "Constante") {
+          Constante();
+        } else {
+          digitalWrite(LED, LOW);
+        }
+
+        // VIBRACIÓN
+        if (vibracion == "Alta") {
+          V_Alta();
+        } else if (vibracion == "Media") {
+          V_Media();
+        } else if (vibracion == "Baja") {
+          V_Baja();
+        } else {
+          digitalWrite(MOTOR, LOW);
+        }
+
+      } else {
+        // Desactivar todo si la alarma está desactivada
+        digitalWrite(LED, LOW);
+        analogWrite(MOTOR, 0);  // Potencia máxima 
+      }
     } else {
       Serial.println("Error de parseo JSON");
     }
   }
 
-  delay(20);  // Pequeño delay para evitar sobrecarga
-}
+  delay(20);  
+} 
 
 
 void Titilar(void) {
+  unsigned long ultimoCambio = 0;
+  bool estado = false;
+
+  unsigned long ahora = millis();
+  if (ahora - ultimoCambio >= 500) {  // cambia cada 500 ms
+    estado = !estado;
+    digitalWrite(LED, estado ? HIGH : LOW);
+    ultimoCambio = ahora;
+  }
 }
 
 void Constante(void) {
-  digitalWrite(LED, HIGH);
+  digitalWrite(LED, HIGH);  // LED siempre prendido
 }
 
 void V_Alta(void) {
-}
-
-void V_Baja(void) {
+  analogWrite(MOTOR, 255);  // Potencia máxima 
 }
 
 void V_Media(void) {
+  analogWrite(MOTOR, 170);  // Potencia media (~66%)
+}
+
+void V_Baja(void) {
+  analogWrite(MOTOR, 85);   // Potencia baja (~33%)
 }
