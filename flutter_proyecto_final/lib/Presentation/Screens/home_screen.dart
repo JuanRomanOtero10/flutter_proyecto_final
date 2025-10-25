@@ -22,16 +22,20 @@ class HomeScreen extends ConsumerWidget {
           Consumer(
             builder: (context, ref, _) {
               final bluetoothService = ref.watch(bluetoothServiceProvider);
-              final color = bluetoothService.isConnected ? Colors.green : Colors.red;
+              final color =
+                  bluetoothService.isConnected ? Colors.green : Colors.red;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 child: Container(
                   width: 16,
                   height: 16,
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color.fromARGB(255, 95, 95, 95), width: 1.5),
+                    border: Border.all(
+                        color: const Color.fromARGB(255, 95, 95, 95),
+                        width: 1.5),
                   ),
                 ),
               );
@@ -45,6 +49,7 @@ class HomeScreen extends ConsumerWidget {
               ref.read(patronVibracionProvider.notifier).state = "Media";
               ref.read(patronLuzProvider.notifier).state = "Constante";
               ref.read(alarmaParaBorrarProvider.notifier).state = [];
+              ref.read(colorLuzProvider.notifier).state = Colors.white;
               context.push('/editar');
             },
           ),
@@ -58,7 +63,8 @@ class HomeScreen extends ConsumerWidget {
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: ListTile(
                 isThreeLine: true,
                 minLeadingWidth: 105,
@@ -79,7 +85,8 @@ class HomeScreen extends ConsumerWidget {
                                     : Colors.transparent,
                               ),
                               child: isSelected(alarma)
-                                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                  ? const Icon(Icons.check,
+                                      size: 16, color: Colors.white)
                                   : null,
                             ),
                           ),
@@ -115,7 +122,8 @@ class HomeScreen extends ConsumerWidget {
                     ? Switch(
                         value: alarma.activa,
                         onChanged: (val) async {
-                          final bluetoothService = ref.read(bluetoothServiceProvider);
+                          final bluetoothService =
+                              ref.read(bluetoothServiceProvider);
 
                           if (!bluetoothService.isConnected) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -134,20 +142,27 @@ class HomeScreen extends ConsumerWidget {
                           await notifier.updateAlarma(nuevaAlarma);
 
                           if (bluetoothService.isConnected) {
-                            final data = {
-                              "hora": nuevaAlarma.hora.format(context),
-                              "luz": nuevaAlarma.luz
-                                  ? (nuevaAlarma.patronLuz ?? 'Ninguna')
-                                  : 'Desactivada',
-                              "vibracion": nuevaAlarma.vibracion
-                                  ? (nuevaAlarma.patronVibracion ?? 'Ninguna')
-                                  : 'Desactivada',
-                              "activa": nuevaAlarma.activa,
-                            };
-                            final json = jsonEncode(data);
+                            final todasLasAlarmas = ref.read(alarmasProvider)
+                                .where((a) => a.activa)
+                                .map((a) => {
+                                      "hora": a.hora.format(context),
+                                      "luz": a.luz ? (a.patronLuz ?? 'Ninguna') : 'Desactivada',
+                                      "vibracion": a.vibracion
+                                          ? (a.patronVibracion ?? 'Ninguna')
+                                          : 'Desactivada',
+                                      "activa": a.activa,
+                                      "color": {
+                                        "r": a.colorLuz.red,
+                                        "g": a.colorLuz.green,
+                                        "b": a.colorLuz.blue,
+                                      },
+                                    })
+                                .toList();
+
+                            final json = jsonEncode({"alarmas": todasLasAlarmas});
                             bluetoothService.sendData("$json\n");
                           }
-                        },
+                        }, 
                       )
                     : null,
                 onTap: () {
@@ -170,6 +185,7 @@ class HomeScreen extends ConsumerWidget {
                         alarma.patronVibracion ?? "Media";
                     ref.read(patronLuzProvider.notifier).state =
                         alarma.patronLuz ?? "Constante";
+                    ref.read(colorLuzProvider.notifier).state = alarma.colorLuz;
                     context.push('/editar');
                   }
                 },
@@ -192,7 +208,8 @@ class HomeScreen extends ConsumerWidget {
                         icon: const Icon(Icons.cancel),
                         label: const Text('Cancelar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
                           minimumSize: const Size.fromHeight(50),
                         ),
                         onPressed: () {
@@ -206,7 +223,8 @@ class HomeScreen extends ConsumerWidget {
                         icon: const Icon(Icons.delete),
                         label: const Text('Eliminar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
                           foregroundColor: Colors.red,
                           minimumSize: const Size.fromHeight(50),
                         ),
@@ -245,4 +263,5 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
+
 

@@ -52,6 +52,7 @@ class _EditarAlarmaState extends ConsumerState<EditarAlarma> {
     luz: luz,
     patronVibracion: ref.read(patronVibracionProvider),
     patronLuz: ref.read(patronLuzProvider),
+    colorLuz: ref.read(colorLuzProvider),
     activa: false,
     id: ref.read(indexSeleccionadoProvider) != null 
         ? ref.read(alarmasProvider)[ref.read(indexSeleccionadoProvider)!].id

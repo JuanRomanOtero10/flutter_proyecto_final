@@ -14,7 +14,7 @@
 
     <application
         android:name="${applicationName}"
-        android:label="flutter_proyecto_final"
+        android:label="Sleep Deep"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
         android:allowBackup="true"

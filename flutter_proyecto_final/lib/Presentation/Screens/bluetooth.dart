@@ -3,6 +3,8 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_proyecto_final/Presentation/providers.dart';
+import 'dart:convert';
+
 
 class BluetoothScreen extends ConsumerStatefulWidget {
   const BluetoothScreen({super.key});
@@ -87,8 +89,23 @@ class _BluetoothScreenState extends ConsumerState<BluetoothScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
+
+      if (conectado) {
+        final now = TimeOfDay.now();
+        final data = {
+          "horaReloj": {
+            "h": now.hour,
+            "m": now.minute,
+            "s": 0,
+          }
+        };
+        final json = jsonEncode(data);
+        bluetoothService.sendData("$json\n");
+        print("Hora enviada al ESP32: ${now.format(context)}");
+      }
     }
   }
+
 
   Future<void> _buscarDispositivosDisponibles() async {
   setState(() {
