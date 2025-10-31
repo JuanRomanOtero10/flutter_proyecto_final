@@ -7,8 +7,8 @@
 BluetoothSerial SerialBT;
 RTC_DS3231 rtc;
 
-#define MOTOR 17
-#define LED_PIN 19
+#define MOTOR 4
+#define LED_PIN 18
 #define NUM_LEDS 12
 #define SCL 22
 #define SDA 21
@@ -140,13 +140,13 @@ void loop() {
         else if (alarmaActual.vibracion == "Media") V_Media();
         else if (alarmaActual.vibracion == "Baja") V_Baja();
       } else {
-        analogWrite(MOTOR, 0);
+        analogWrite(MOTOR, 255);
       }
 
     } else {
       alarmaEnCurso = false;
       apagarLuz();
-      analogWrite(MOTOR, 0);
+      analogWrite(MOTOR, 255);
     }
   }
 }
@@ -182,13 +182,13 @@ void apagarLuz() {
 // ------------------- FUNCIONES DE VIBRACIÓN -------------------
 
 void V_Alta() { 
-  analogWrite(MOTOR, 255); 
+  analogWrite(MOTOR, 155); 
 }
 
 void V_Media() { 
-  analogWrite(MOTOR, 170); 
+  analogWrite(MOTOR, 205); 
 }
 
 void V_Baja() { 
-  analogWrite(MOTOR, 85); 
+  analogWrite(MOTOR, 235); 
 }
