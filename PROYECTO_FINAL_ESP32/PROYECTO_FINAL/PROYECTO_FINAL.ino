@@ -43,6 +43,7 @@ void setup() {
   SerialBT.begin("Sleep Deep");
   Serial.println("ESP32 listo para emparejarse por Bluetooth");
 
+
   Wire.begin(SDA, SCL);
   if (!rtc.begin()) {
     Serial.println("No se detecta el RTC DS3231");
@@ -52,6 +53,8 @@ void setup() {
   pinMode(MOTOR, OUTPUT);
   ring.begin();
   ring.show();  // apaga los LEDs
+  digitalWrite(MOTOR, HIGH); 
+
 
   Serial.println("Esperando alarmas...");
 }
