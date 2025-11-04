@@ -43,6 +43,7 @@ void setup() {
   SerialBT.begin("Sleep Deep");
   Serial.println("ESP32 listo para emparejarse por Bluetooth");
 
+
   Wire.begin(SDA, SCL);
   if (!rtc.begin()) {
     Serial.println("No se detecta el RTC DS3231");
@@ -52,6 +53,8 @@ void setup() {
   pinMode(MOTOR, OUTPUT);
   ring.begin();
   ring.show();  // apaga los LEDs
+  digitalWrite(MOTOR, HIGH); 
+
 
   Serial.println("Esperando alarmas...");
 }
@@ -140,13 +143,13 @@ void loop() {
         else if (alarmaActual.vibracion == "Media") V_Media();
         else if (alarmaActual.vibracion == "Baja") V_Baja();
       } else {
-        analogWrite(MOTOR, 0);
+        analogWrite(MOTOR, 255);
       }
 
     } else {
       alarmaEnCurso = false;
       apagarLuz();
-      analogWrite(MOTOR, 0);
+      analogWrite(MOTOR, 255);
     }
   }
 }
@@ -182,6 +185,7 @@ void apagarLuz() {
 // ------------------- FUNCIONES DE VIBRACIÓN -------------------
 
 void V_Alta() { 
+<<<<<<< HEAD
   analogWrite(MOTOR, 100); 
 }
 
@@ -191,4 +195,15 @@ void V_Media() {
 
 void V_Baja() { 
   analogWrite(MOTOR, 10); 
+=======
+  analogWrite(MOTOR, 155); 
+}
+
+void V_Media() { 
+  analogWrite(MOTOR, 205); 
+}
+
+void V_Baja() { 
+  analogWrite(MOTOR, 235); 
+>>>>>>> b7979253f4fba6d5775044dbf929ca3a7a0004ef
 }
