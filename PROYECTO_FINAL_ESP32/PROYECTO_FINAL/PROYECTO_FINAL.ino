@@ -7,6 +7,7 @@
 BluetoothSerial SerialBT;
 RTC_DS3231 rtc;
 
+#define BOTON 14
 #define MOTOR 4
 #define LED_PIN 18
 #define NUM_LEDS 12
@@ -15,7 +16,6 @@ RTC_DS3231 rtc;
 
 Adafruit_NeoPixel ring(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-// --- Estructura de alarma ---
 struct Alarma {
   String hora;
   String luz;
@@ -28,12 +28,10 @@ struct Alarma {
 Alarma alarmas[MAX_ALARMAS];
 int totalAlarmas = 0;
 
-// --- Variables globales ---
 unsigned long ultimoTitilar = 0;
 bool estadoLED = false;
 bool rtcConfigurado = false;
 
-// Control de alarma en ejecución
 bool alarmaEnCurso = false;
 unsigned long inicioAlarma = 0;
 Alarma alarmaActual;
@@ -43,26 +41,31 @@ void setup() {
   SerialBT.begin("Sleep Deep");
   Serial.println("ESP32 listo para emparejarse por Bluetooth");
 
-
   Wire.begin(SDA, SCL);
   if (!rtc.begin()) {
     Serial.println("No se detecta el RTC DS3231");
-    while (1);
+    while (1)
+      ;
   }
 
   pinMode(MOTOR, OUTPUT);
-  ring.begin();
-  ring.show();  // apaga los LEDs
-  digitalWrite(MOTOR, HIGH); 
+  pinMode(BOTON, INPUT_PULLUP);
 
+  ring.begin();
+  ring.show();
+  digitalWrite(MOTOR, HIGH);
 
   Serial.println("Esperando alarmas...");
 }
 
+bool botonPresionado = false;
+unsigned long ultimoCambioBoton = 0;
+const unsigned long tiempoRebote = 300;  // ms
+
 void loop() {
   unsigned long ahora = millis();
 
-  // 🔹 Leer datos de Bluetooth (lista de alarmas)
+  // 🔹 Leer datos de Bluetooth
   if (SerialBT.available()) {
     String mensaje = SerialBT.readStringUntil('\n');
     StaticJsonDocument<1024> doc;
@@ -96,24 +99,17 @@ void loop() {
       }
 
       Serial.printf("Recibidas %d alarmas activas\n", totalAlarmas);
-      for (int i = 0; i < totalAlarmas; i++) {
-        Serial.printf("[%d] %s (%s/%s)\n",
-                      i + 1,
-                      alarmas[i].hora.c_str(),
-                      alarmas[i].luz.c_str(),
-                      alarmas[i].vibracion.c_str());
-      }
+      mostrarAlarmasRestantes();
     } else {
       Serial.println("Error al parsear JSON");
     }
   }
 
-  // 🔹 Obtener hora actual del RTC
   DateTime ahoraRTC = rtc.now();
   char horaActual[6];
   sprintf(horaActual, "%02d:%02d", ahoraRTC.hour(), ahoraRTC.minute());
 
-  // 🔹 Iniciar alarma si coincide
+  // 🔹 Iniciar alarma
   if (!alarmaEnCurso) {
     for (int i = 0; i < totalAlarmas; i++) {
       if (alarmas[i].activa && alarmas[i].hora == horaActual) {
@@ -126,16 +122,27 @@ void loop() {
     }
   }
 
-  // 🔹 Ejecutar alarma en curso
+  int lecturaBoton = digitalRead(BOTON);
+  if (lecturaBoton == LOW && (ahora - ultimoCambioBoton > tiempoRebote)) {
+    botonPresionado = true;
+    ultimoCambioBoton = ahora;
+  }
+
+  // 🔹 Ejecutar alarma
   if (alarmaEnCurso) {
-    if (ahora - inicioAlarma < 15000) {  // dura 15 segundos
+    if (botonPresionado) {
+      Serial.println("🖐️ Botón presionado: alarma detenida manualmente");
+      finalizarAlarma();
+      botonPresionado = false;
+      return;
+    }
+
+    if (ahora - inicioAlarma < 30000) {
       // Luz
       if (alarmaActual.luz != "Desactivada") {
         if (alarmaActual.luz == "Titilar") Titilar(alarmaActual.r, alarmaActual.g, alarmaActual.b);
         else if (alarmaActual.luz == "Constante") Constante(alarmaActual.r, alarmaActual.g, alarmaActual.b);
-      } else {
-        apagarLuz();
-      }
+      } else apagarLuz();
 
       // Vibración
       if (alarmaActual.vibracion != "Desactivada") {
@@ -147,19 +154,54 @@ void loop() {
       }
 
     } else {
-      alarmaEnCurso = false;
-      apagarLuz();
-      analogWrite(MOTOR, 255);
+      Serial.println("⏹️ Alarma finalizada automáticamente");
+      finalizarAlarma();
     }
   }
 }
 
-// ------------------- FUNCIONES DE LUZ -------------------
+void finalizarAlarma() {
+  alarmaEnCurso = false;
+  apagarLuz();
+  analogWrite(MOTOR, 255);
 
-void Constante(uint8_t r, uint8_t g, uint8_t b) {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    ring.setPixelColor(i, ring.Color(r, g, b));
+  for (int i = 0; i < totalAlarmas; i++) {
+    if (alarmas[i].hora == alarmaActual.hora) {
+      for (int j = i; j < totalAlarmas - 1; j++) {
+        alarmas[j] = alarmas[j + 1];
+      }
+      totalAlarmas--;
+      Serial.printf("🗑️ Alarma %s eliminada del ESP\n", alarmaActual.hora.c_str());
+      mostrarAlarmasRestantes();
+      break;
+    }
   }
+}
+
+
+void mostrarAlarmasRestantes() {
+  Serial.println("📋 Alarmas restantes en el ESP:");
+  if (totalAlarmas == 0) {
+    Serial.println("  (ninguna alarma cargada)");
+    return;
+  }
+
+  for (int i = 0; i < totalAlarmas; i++) {
+    Serial.printf("  %d) Hora: %s | Luz: %s | Vibración: %s | Color: (%d, %d, %d)\n",
+                  i + 1,
+                  alarmas[i].hora.c_str(),
+                  alarmas[i].luz.c_str(),
+                  alarmas[i].vibracion.c_str(),
+                  alarmas[i].r,
+                  alarmas[i].g,
+                  alarmas[i].b);
+  }
+  Serial.println("-----------------------------");
+}
+
+// ------------------- FUNCIONES DE LUZ -------------------
+void Constante(uint8_t r, uint8_t g, uint8_t b) {
+  for (int i = 0; i < NUM_LEDS; i++) ring.setPixelColor(i, ring.Color(r, g, b));
   ring.show();
 }
 
@@ -176,22 +218,17 @@ void Titilar(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void apagarLuz() {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    ring.setPixelColor(i, 0);
-  }
+  for (int i = 0; i < NUM_LEDS; i++) ring.setPixelColor(i, 0);
   ring.show();
 }
 
 // ------------------- FUNCIONES DE VIBRACIÓN -------------------
-
-void V_Alta() { 
-  analogWrite(MOTOR, 155); 
+void V_Alta() {
+  analogWrite(MOTOR, 100);
 }
-
-void V_Media() { 
-  analogWrite(MOTOR, 205); 
+void V_Media() {
+  analogWrite(MOTOR, 150);
 }
-
-void V_Baja() { 
-  analogWrite(MOTOR, 235); 
+void V_Baja() {
+  analogWrite(MOTOR, 210);
 }
