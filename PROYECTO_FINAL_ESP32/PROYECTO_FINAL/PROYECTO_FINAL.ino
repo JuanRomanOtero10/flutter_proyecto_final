@@ -28,14 +28,26 @@ struct Alarma {
 Alarma alarmas[MAX_ALARMAS];
 int totalAlarmas = 0;
 
+// ------------------- VARIABLES GLOBALES -------------------
 unsigned long ultimoTitilar = 0;
+unsigned long ultimoTitilarConexion = 0;
 bool estadoLED = false;
+bool estadoLEDConexion = false;
 bool rtcConfigurado = false;
 
 bool alarmaEnCurso = false;
 unsigned long inicioAlarma = 0;
 Alarma alarmaActual;
 
+bool conectadoAntes = false;
+unsigned long inicioConexion = 0;
+bool mostrandoConexion = false;  // ✅ nueva bandera para evitar conflictos
+
+bool botonPresionado = false;
+unsigned long ultimoCambioBoton = 0;
+const unsigned long tiempoRebote = 300;  // ms
+
+// ------------------- SETUP -------------------
 void setup() {
   Serial.begin(115200);
   SerialBT.begin("Sleep Deep");
@@ -44,8 +56,7 @@ void setup() {
   Wire.begin(SDA, SCL);
   if (!rtc.begin()) {
     Serial.println("No se detecta el RTC DS3231");
-    while (1)
-      ;
+    while (1);
   }
 
   pinMode(MOTOR, OUTPUT);
@@ -58,14 +69,36 @@ void setup() {
   Serial.println("Esperando alarmas...");
 }
 
-bool botonPresionado = false;
-unsigned long ultimoCambioBoton = 0;
-const unsigned long tiempoRebote = 300;  // ms
-
+// ------------------- LOOP PRINCIPAL -------------------
 void loop() {
   unsigned long ahora = millis();
 
-  // 🔹 Leer datos de Bluetooth
+  // --- DETECTAR CONEXIÓN BLUETOOTH ---
+  if (SerialBT.hasClient() && !conectadoAntes) {
+    Serial.println("📱 Celular conectado al ESP32");
+    inicioConexion = millis();
+    conectadoAntes = true;
+    mostrandoConexion = true;
+  }
+
+  if (mostrandoConexion && !alarmaEnCurso) {  // ✅ solo si no hay alarma activa
+    if (millis() - inicioConexion <= 3000) {
+      TitilarConexion(0, 255, 0);  // Verde por 3 segundos
+    } else {
+      apagarLuz();
+      mostrandoConexion = false;
+    }
+  }
+
+  // Si se desconecta el celular
+  if (!SerialBT.hasClient() && conectadoAntes) {
+    Serial.println("❌ Celular desconectado");
+    conectadoAntes = false;
+    mostrandoConexion = false;
+    apagarLuz();
+  }
+
+  // --- LEER DATOS DE BLUETOOTH ---
   if (SerialBT.available()) {
     String mensaje = SerialBT.readStringUntil('\n');
     StaticJsonDocument<1024> doc;
@@ -109,26 +142,28 @@ void loop() {
   char horaActual[6];
   sprintf(horaActual, "%02d:%02d", ahoraRTC.hour(), ahoraRTC.minute());
 
-  // 🔹 Iniciar alarma
+  // --- INICIAR ALARMA ---
   if (!alarmaEnCurso) {
     for (int i = 0; i < totalAlarmas; i++) {
       if (alarmas[i].activa && alarmas[i].hora == horaActual) {
         alarmaEnCurso = true;
         inicioAlarma = ahora;
         alarmaActual = alarmas[i];
+        mostrandoConexion = false;  // ✅ detener parpadeo verde si arranca alarma
         Serial.printf("⏰ Activando alarma de las %s\n", alarmaActual.hora.c_str());
         break;
       }
     }
   }
 
+  // --- DETECTAR BOTÓN ---
   int lecturaBoton = digitalRead(BOTON);
   if (lecturaBoton == LOW && (ahora - ultimoCambioBoton > tiempoRebote)) {
     botonPresionado = true;
     ultimoCambioBoton = ahora;
   }
 
-  // 🔹 Ejecutar alarma
+  // --- EJECUTAR ALARMA ---
   if (alarmaEnCurso) {
     if (botonPresionado) {
       Serial.println("🖐️ Botón presionado: alarma detenida manualmente");
@@ -160,6 +195,7 @@ void loop() {
   }
 }
 
+// ------------------- FUNCIONES AUXILIARES -------------------
 void finalizarAlarma() {
   alarmaEnCurso = false;
   apagarLuz();
@@ -177,7 +213,6 @@ void finalizarAlarma() {
     }
   }
 }
-
 
 void mostrarAlarmasRestantes() {
   Serial.println("📋 Alarmas restantes en el ESP:");
@@ -217,6 +252,18 @@ void Titilar(uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
+void TitilarConexion(uint8_t r, uint8_t g, uint8_t b) {
+  unsigned long ahora = millis();
+  if (ahora - ultimoTitilarConexion >= 300) {
+    estadoLEDConexion = !estadoLEDConexion;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      ring.setPixelColor(i, estadoLEDConexion ? ring.Color(r, g, b) : ring.Color(0, 0, 0));
+    }
+    ring.show();
+    ultimoTitilarConexion = ahora;
+  }
+}
+
 void apagarLuz() {
   for (int i = 0; i < NUM_LEDS; i++) ring.setPixelColor(i, 0);
   ring.show();
@@ -224,11 +271,12 @@ void apagarLuz() {
 
 // ------------------- FUNCIONES DE VIBRACIÓN -------------------
 void V_Alta() {
-  analogWrite(MOTOR, 100);
+  analogWrite(MOTOR, 70);
 }
 void V_Media() {
-  analogWrite(MOTOR, 150);
+  analogWrite(MOTOR, 120);
 }
 void V_Baja() {
-  analogWrite(MOTOR, 210);
+  analogWrite(MOTOR, 170);
 }
+
